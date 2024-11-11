@@ -1,223 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Programming Language Invaders</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split View with Titles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .main-title {
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #333;
+            color: #fff;
+        }
+        .split-view {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 60px); /* Adjust height to fill the page minus the title */
+        }
+        .iframe-container {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .iframe-title {
+            text-align: center;
+            font-size: 18px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-bottom: 1px solid #ccc;
+        }
+        .iframe-content {
+            flex-grow: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
-<body style="margin: 0; overflow: hidden; background: black;">
-    <canvas id="gameCanvas"></canvas>
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+<body>
 
-        // Set canvas to full window size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+    <div class="main-title">Main Title of the Page</div>
 
-        // Game variables
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height - 60,
-            width: 50,
-            height: 30,
-            speed: 5
-        };
+    <div class="split-view">
+        <div class="iframe-container">
+            <div class="iframe-title">claude.ai</div>
+            <iframe src="page1.html" class="iframe-content"></iframe>
+        </div>
+        <div class="iframe-container">
+            <div class="iframe-title">ChatGPT</div>
+            <iframe src="page2.html" class="iframe-content"></iframe>
+        </div>
+    </div>
 
-        const bullet = {
-            x: 0,
-            y: 0,
-            width: 4,
-            height: 10,
-            speed: 7,
-            active: false
-        };
-
-        const languages = [
-            "Python", "JavaScript", "Java", "C++",
-            "Ruby", "PHP", "Swift", "Go"
-        ];
-
-        const enemies = [];
-        const enemyRows = 4;
-        const enemiesPerRow = 8;
-        const enemyPadding = 60;
-
-        // Create enemies
-        for (let row = 0; row < enemyRows; row++) {
-            for (let col = 0; col < enemiesPerRow; col++) {
-                enemies.push({
-                    x: col * enemyPadding + 100,
-                    y: row * enemyPadding + 50,
-                    width: 50,
-                    height: 30,
-                    text: languages[(row * enemiesPerRow + col) % languages.length],
-                    direction: 1,
-                    speed: 1
-                });
-            }
-        }
-
-        let score = 0;
-        let gameOver = false;
-        let keys = {};
-
-        // Event listeners
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.key === ' ' && !bullet.active) {
-                bullet.active = true;
-                bullet.x = player.x + player.width / 2;
-                bullet.y = player.y;
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
-
-        function drawPlayer() {
-            ctx.fillStyle = '#00ff00';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-        }
-
-        function drawBullet() {
-            if (bullet.active) {
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(bullet.x - bullet.width/2, bullet.y, bullet.width, bullet.height);
-            }
-        }
-
-        function drawEnemies() {
-            enemies.forEach(enemy => {
-                if (enemy.text) {
-                    ctx.fillStyle = '#ff0000';
-                    ctx.font = '14px Arial';
-                    ctx.fillText(enemy.text, enemy.x, enemy.y + 20);
-                }
-            });
-        }
-
-        function drawScore() {
-            ctx.fillStyle = '#fff';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Score: ${score}`, 10, 30);
-        }
-
-        function drawGameOver() {
-            if (gameOver) {
-                ctx.fillStyle = '#fff';
-                ctx.font = '40px Arial';
-                ctx.fillText('Game Over!', canvas.width/2 - 100, canvas.height/2);
-                ctx.font = '20px Arial';
-                ctx.fillText('Press R to restart', canvas.width/2 - 80, canvas.height/2 + 40);
-            }
-        }
-
-        function movePlayer() {
-            if (keys['ArrowLeft'] && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
-                player.x += player.speed;
-            }
-        }
-
-        function moveBullet() {
-            if (bullet.active) {
-                bullet.y -= bullet.speed;
-                if (bullet.y < 0) {
-                    bullet.active = false;
-                }
-            }
-        }
-
-        function moveEnemies() {
-            let touchedEdge = false;
-            
-            enemies.forEach(enemy => {
-                if (enemy.text) {
-                    enemy.x += enemy.speed * enemy.direction;
-                    
-                    if (enemy.x <= 0 || enemy.x >= canvas.width - enemy.width) {
-                        touchedEdge = true;
-                    }
-                }
-            });
-
-            if (touchedEdge) {
-                enemies.forEach(enemy => {
-                    enemy.direction *= -1;
-                    enemy.y += 20;
-                    
-                    if (enemy.y + enemy.height >= player.y) {
-                        gameOver = true;
-                    }
-                });
-            }
-        }
-
-        function checkCollisions() {
-            if (bullet.active) {
-                enemies.forEach(enemy => {
-                    if (enemy.text && 
-                        bullet.x >= enemy.x && 
-                        bullet.x <= enemy.x + enemy.width &&
-                        bullet.y >= enemy.y && 
-                        bullet.y <= enemy.y + enemy.height) {
-                        
-                        enemy.text = null;
-                        bullet.active = false;
-                        score += 100;
-                        
-                        if (enemies.every(e => !e.text)) {
-                            alert('You won! Press R to restart');
-                            gameOver = true;
-                        }
-                    }
-                });
-            }
-        }
-
-        function resetGame() {
-            enemies.forEach((enemy, index) => {
-                enemy.x = (index % enemiesPerRow) * enemyPadding + 100;
-                enemy.y = Math.floor(index / enemiesPerRow) * enemyPadding + 50;
-                enemy.text = languages[index % languages.length];
-                enemy.direction = 1;
-            });
-            player.x = canvas.width / 2;
-            bullet.active = false;
-            score = 0;
-            gameOver = false;
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!gameOver) {
-                movePlayer();
-                moveBullet();
-                moveEnemies();
-                checkCollisions();
-            }
-            
-            drawPlayer();
-            drawBullet();
-            drawEnemies();
-            drawScore();
-            drawGameOver();
-            
-            if (gameOver && keys['r']) {
-                resetGame();
-            }
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
-    </script>
 </body>
 </html>

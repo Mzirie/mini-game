@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders with Programming Languages</title>
+    <style>
+        body, html {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        canvas {
+            border: 2px solid white;
+            background-color: #111;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Game variables
+    const playerWidth = 50;
+    const playerHeight = 20;
+    const playerSpeed = 10;
+    let playerX = (canvas.width - playerWidth) / 2;
+    let bullets = [];
+    let enemies = [];
+    const enemyRows = 3;
+    const enemyCols = 7;
+    const enemyWidth = 50;
+    const enemyHeight = 30;
+    const enemyPadding = 20;
+    const enemyOffsetTop = 30;
+    const enemyOffsetLeft = 30;
+    const bulletSpeed = 5;
+    const enemySpeed = 1;
+
+    // Programming languages to represent as "invaders"
+    const programmingLanguages = ["JS", "Python", "Java", "C++", "Ruby", "Go", "Swift"];
+    let gameOver = false;
+    let score = 0;
+
+    // Player control
+    let rightPressed = false;
+    let leftPressed = false;
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+        if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+        if (e.key === " " || e.key === "Spacebar") shootBullet();
+    });
+
+    document.addEventListener("keyup", (e) => {
+        if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+        if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+    });
+
+    function drawPlayer() {
+        ctx.fillStyle = "#00FF00";
+        ctx.fillRect(playerX, canvas.height - playerHeight - 10, playerWidth, playerHeight);
+    }
+
+    function shootBullet() {
+        bullets.push({ x: playerX + playerWidth / 2 - 2.5, y: canvas.height - playerHeight - 15 });
+    }
+
+    function drawBullets() {
+        ctx.fillStyle = "#FF4500";
+        bullets = bullets.filter(bullet => bullet.y > 0);
+        bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, 5, 10);
+            bullet.y -= bulletSpeed;
+        });
+    }
+
+    function createEnemies() {
+        for (let row = 0; row < enemyRows; row++) {
+            for (let col = 0; col < enemyCols; col++) {
+                const x = col * (enemyWidth + enemyPadding) + enemyOffsetLeft;
+                const y = row * (enemyHeight + enemyPadding) + enemyOffsetTop;
+                const language = programmingLanguages[(row * enemyCols + col) % programmingLanguages.length];
+                enemies.push({ x, y, language, isAlive: true });
+            }
+        }
+    }
+
+    function drawEnemies() {
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#FFD700";
+        enemies.forEach(enemy => {
+            if (enemy.isAlive) {
+                ctx.fillText(enemy.language, enemy.x + enemyWidth / 4, enemy.y + enemyHeight / 1.5);
+            }
+        });
+    }
+
+    function moveEnemies() {
+        enemies.forEach(enemy => {
+            if (enemy.isAlive) {
+                enemy.y += enemySpeed;
+                if (enemy.y > canvas.height - enemyHeight) {
+                    gameOver = true;
+                }
+            }
+        });
+    }
+
+    function detectCollisions() {
+        bullets.forEach(bullet => {
+            enemies.forEach(enemy => {
+                if (
+                    enemy.isAlive &&
+                    bullet.x > enemy.x &&
+                    bullet.x < enemy.x + enemyWidth &&
+                    bullet.y > enemy.y &&
+                    bullet.y < enemy.y + enemyHeight
+                ) {
+                    enemy.isAlive = false;
+                    bullet.y = -10; // Move bullet off screen
+                    score += 10;
+                }
+            });
+        });
+    }
+
+    function drawScore() {
+        ctx.font = "18px Arial";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText("Score: " + score, 10, 20);
+    }
+
+    function drawGameOver() {
+        ctx.font = "36px Arial";
+        ctx.fillStyle = "#FF0000";
+        ctx.fillText("GAME OVER", canvas.width / 2 - 100, canvas.height / 2);
+    }
+
+    function draw() {
+        if (gameOver) {
+            drawGameOver();
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawPlayer();
+        drawBullets();
+        drawEnemies();
+        drawScore();
+        moveEnemies();
+        detectCollisions();
+
+        if (rightPressed && playerX < canvas.width - playerWidth) {
+            playerX += playerSpeed;
+        }
+        if (leftPressed && playerX > 0) {
+            playerX -= playerSpeed;
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    createEnemies();
+    draw();
+</script>
+
+</body>
+</html>
