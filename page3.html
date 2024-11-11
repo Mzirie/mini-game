@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Star Catcher</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        #player {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4a90e2;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: left 0.1s;
+        }
+        .star, .meteor {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+        }
+        .star {
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+        }
+        .meteor {
+            background: #ff4444;
+            box-shadow: 0 0 10px #ff4444;
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 48px;
+            display: none;
+            text-align: center;
+        }
+        #restart-btn {
+            padding: 10px 20px;
+            font-size: 24px;
+            background: #4a90e2;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="score">Score: 0</div>
+        <div id="game-over">
+            Game Over!
+            <br>
+            <button id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        let score = 0;
+        let gameRunning = true;
+        
+        // Player movement
+        document.addEventListener('mousemove', (e) => {
+            if (!gameRunning) return;
+            const x = e.clientX;
+            player.style.left = Math.max(25, Math.min(window.innerWidth - 25, x)) + 'px';
+        });
+
+        function createObject(type) {
+            const object = document.createElement('div');
+            object.className = type;
+            object.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+            object.style.top = '-30px';
+            gameContainer.appendChild(object);
+            
+            let pos = -30;
+            const speed = type === 'star' ? 3 : 5;
+            
+            function fall() {
+                if (!gameRunning) {
+                    object.remove();
+                    return;
+                }
+                
+                pos += speed;
+                object.style.top = pos + 'px';
+                
+                // Check collision with player
+                const playerRect = player.getBoundingClientRect();
+                const objectRect = object.getBoundingClientRect();
+                
+                if (
+                    objectRect.left < playerRect.right &&
+                    objectRect.right > playerRect.left &&
+                    objectRect.bottom > playerRect.top &&
+                    objectRect.top < playerRect.bottom
+                ) {
+                    if (type === 'star') {
+                        score += 10;
+                        scoreElement.textContent = 'Score: ' + score;
+                    } else {
+                        endGame();
+                    }
+                    object.remove();
+                    return;
+                }
+                
+                if (pos < window.innerHeight) {
+                    requestAnimationFrame(fall);
+                } else {
+                    object.remove();
+                }
+            }
+            
+            requestAnimationFrame(fall);
+        }
+
+        function spawnObjects() {
+            if (!gameRunning) return;
+            
+            if (Math.random() < 0.5) {
+                createObject('star');
+            } else {
+                createObject('meteor');
+            }
+            
+            setTimeout(spawnObjects, 1000);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+        }
+
+        function startGame() {
+            score = 0;
+            scoreElement.textContent = 'Score: 0';
+            gameOverElement.style.display = 'none';
+            gameRunning = true;
+            spawnObjects();
+        }
+
+        restartBtn.addEventListener('click', startGame);
+        startGame();
+    </script>
+</body>
+</html>

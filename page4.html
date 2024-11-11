@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dodge the Falling Objects Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #282c34;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #game {
+      position: relative;
+      width: 400px;
+      height: 600px;
+      background-color: #333;
+      border: 2px solid #444;
+      overflow: hidden;
+    }
+    #player {
+      position: absolute;
+      bottom: 20px;
+      left: 180px;
+      width: 40px;
+      height: 40px;
+      background-color: #4caf50;
+      border-radius: 20%;
+    }
+    .obstacle {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-color: #f44336;
+      border-radius: 50%;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="player"></div>
+    <div id="score">Score: 0</div>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const player = document.getElementById("player");
+    const scoreDisplay = document.getElementById("score");
+    const gameWidth = game.offsetWidth;
+    const gameHeight = game.offsetHeight;
+
+    let playerX = gameWidth / 2 - player.offsetWidth / 2;
+    let score = 0;
+    let gameInterval;
+    let obstacleSpeed = 3;
+    let gameOver = false;
+
+    // Move player left or right
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && playerX > 0) {
+        playerX -= 20;
+      } else if (e.key === "ArrowRight" && playerX < gameWidth - player.offsetWidth) {
+        playerX += 20;
+      }
+      player.style.left = playerX + "px";
+    });
+
+    // Generate obstacles
+    function createObstacle() {
+      const obstacle = document.createElement("div");
+      obstacle.classList.add("obstacle");
+      obstacle.style.left = Math.random() * (gameWidth - 30) + "px";
+      obstacle.style.top = "0px";
+      game.appendChild(obstacle);
+      return obstacle;
+    }
+
+    // Game loop
+    function gameLoop() {
+      if (gameOver) return;
+
+      // Move obstacles down
+      const obstacles = document.querySelectorAll(".obstacle");
+      obstacles.forEach((obstacle) => {
+        const obstacleY = parseFloat(obstacle.style.top);
+        if (obstacleY + 30 > gameHeight) {
+          obstacle.remove();
+          score += 10;
+          scoreDisplay.textContent = "Score: " + score;
+        } else {
+          obstacle.style.top = obstacleY + obstacleSpeed + "px";
+        }
+
+        // Check for collision
+        const playerRect = player.getBoundingClientRect();
+        const obstacleRect = obstacle.getBoundingClientRect();
+        if (
+          playerRect.left < obstacleRect.right &&
+          playerRect.right > obstacleRect.left &&
+          playerRect.top < obstacleRect.bottom &&
+          playerRect.bottom > obstacleRect.top
+        ) {
+          endGame();
+        }
+      });
+
+      // Increase difficulty over time
+      if (score % 100 === 0 && obstacleSpeed < 10) {
+        obstacleSpeed += 0.5;
+      }
+    }
+
+    // Start game
+    function startGame() {
+      gameInterval = setInterval(() => {
+        createObstacle();
+        gameLoop();
+      }, 100);
+    }
+
+    // End game
+    function endGame() {
+      gameOver = true;
+      clearInterval(gameInterval);
+      alert("Game Over! Your score: " + score);
+      location.reload(); // Reload page to restart game
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
